@@ -1,0 +1,11 @@
+exceptions of old
+modern exceptions
+Try::Tiny
+TryCatch
+Introducing DBIx::Exceptions
+Plans are for it to support all databases and all exceptions that people care about
+(by care about I mean you care enough to implement)
+As for database localisation, I only plan to implement for english, if you have a problem with that, Patches Welcome :-)
+How to set up
+Examples in action
+Enjoy!
