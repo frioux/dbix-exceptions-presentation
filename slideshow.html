@@ -79,6 +79,18 @@
    </div>
 
    <div class="slide">
+      <h1>Super Basic Exceptions in Perl</h1>
+<pre>
+my $x = rand 10;
+die "half-broken: $x" if $x &lt; 5
+</pre>
+      <ul class="incremental">
+         <li>die kills program</li>
+         <li>message is given to user</li>
+      </ul>
+   </div>
+
+   <div class="slide">
       <h1>Vanilla Perl Exceptions</h1>
 <pre>eval {
   my $x = rand 10;
@@ -102,6 +114,7 @@ say 'coin flip fail'
       </ul>
       <br />
       <ul class="incremental">
+         <li>On the other hand...</li>
          <li>Not very reusable</li>
          <li>Not easy to read</li>
          <li>Clobbers previous exceptions (overwrites $@)</li>
@@ -128,6 +141,43 @@ say 'coin flip fail'
 </pre>
       <ul class="incremental">
          <li>Note that exception does not need to be parsed.  Nice.</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Exception::Class</h1>
+      <ul class="incremental">
+         <li>Does not require Moose</li>
+         <li>Simple to use</li>
+         <li>Adds some catch semantics</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Exception::Class Exception</h1>
+<pre>package MyApp::Exceptions;
+use Exception::Class (
+   'MyApp::Exception::Foo' =&gt; {
+      fields =&gt; ['num'],
+   },
+);
+
+</pre>
+   </div>
+
+   <div class="slide">
+      <h1>Exception::Class in action</h1>
+<pre>eval {
+  my $x = rand 10;
+  MyApp::Exception::Foo-&gt;throw( num =&gt; $x )
+    if $x &lt; 5
+};
+say 'coin flip fail'
+   if Exception::Class-&gt;caught('MyApp::Exception::Foo');
+</pre>
+      <ul class="incremental">
+         <li>throw dies and instantiates at the same time</li>
+         <li>also sets previous_exception attribute to whatever was in $@</li>
       </ul>
    </div>
 
@@ -200,6 +250,7 @@ say 'coin flip fail'
       <ul class="incremental">
          <li>$@ becomes $_</li>
          <li>No real need to check definedness</li>
+         <li>Also note: finally</li>
       </ul>
    </div>
 
@@ -221,11 +272,31 @@ say 'coin flip fail'
     if $x &lt; 5
 } catch (Foo $e) {
    say 'coin flip fail with num of ' . $e-&gt;num
-};
+}
 </pre>
-      <ul>
+      <ul class="incremental">
          <li>ensures that $e is of class Foo</li>
-         <li>Lots more features, no time, see <a href="http://search.cpan.org/perldoc?TryCatch">docs</a></li>
+         <li>returns from catch work as expected (not in Try::Tiny)</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Advanced TryCatch in action</h1>
+<pre>try { ... }
+catch (Foo $e) { ... }
+catch (Bar $e) { ... }
+catch (Baz $e where { $e-&gt;num &gt; 5 }) { ... }
+</pre>
+      <ul class="incremental">
+         <li>multiple catch clauses</li>
+         <li>catch with where clauses</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Carp::Always</h1>
+      <ul class="incremental">
+         <li>Super awesome: forces stacktrace</li>
       </ul>
    </div>
 
@@ -233,7 +304,6 @@ say 'coin flip fail'
       <h1>NOW YOU KNOW EVERYTHING</h1>
       <ul class="incremental">
          <li>Go forth and code</li>
-         <li>Just kidding, here's the fun stuff</li>
       </ul>
    </div>
 
@@ -258,23 +328,26 @@ if ($@ =~ /unique \s+ constraint \s+ violated/ix) {
    <div class="slide">
       <h1>Introducing DBIx::Exceptions</h1>
       <p>DBIx::Exceptions - Database exceptions for all RDBMS' Ever</p>
+      <ul class="incremental">
+         <li>Currently uses Exception::Class, but don't depend on that</li>
+      </ul>
    </div>
 
    <div class="slide">
-      <h1>Introducing DBIx::Exceptions</h1>
-      <ul>
-         <li>Databases Initially Supported:<ul>
+      <h1>What it do's?</h1>
+      <ul class="incremental">
+         <li>Databases Initially Supported:<ul class="incremental">
             <li>SQLite</li>
             <li>PostgreSQL</li>
             <li><del>SQLServer</del></li>
             <li><del>MySQL</del></li>
          </ul></li>
-         <li>Exceptions Initially Supported:<ul>
+         <li>Exceptions Initially Supported:<ul class="incremental">
             <li>Unique</li>
-            <li><del>Foreign Key</del></li>
             <li>Invalid Table</li>
             <li>Invalid Column</li>
             <li>Syntax</li>
+            <li><del>Foreign Key</del></li>
          </ul></li>
       </ul>
    </div>
@@ -293,17 +366,24 @@ if ($@ =~ /unique \s+ constraint \s+ violated/ix) {
       <h1>Setup</h1>
 <pre>my $dbh = DBI-&gt;connect($dsn, $username, $password);
 
-$dbh-&gt;{HandleError} = DBIx::ParseException-&gt;handler({ dbh =&gt; $dbh });
+$dbh-&gt;{HandleError} =
+   DBIx::ParseException-&gt;handler({ dbh =&gt; $dbh });
 </pre>
    </div>
 
    <div class="slide">
-      <h1>Example Usage</h1>
+      <h1>Example Usage (1)</h1>
 <pre>
 try {
-   my $sth = $dbh-&gt;prepare('INSERT INTO Emails (email) VALUES (?)');
-   $sth-&gt;execute('frew@gmail.com') for (1..2);
-} catch (DBIx::Exception::NotUnique $e where { $e-&gt;column eq 'email'}) {
+   my $sth = $dbh-&gt;prepare(
+      'INSERT INTO Emails (email) VALUES (?)'
+   );
+   $sth-&gt;execute('frew@gmail.com')
+      for (1..2);
+} catch (
+   DBIx::Exception::NotUnique $e
+   where { $e-&gt;column eq 'email'}
+) {
    ...
 };
 </pre>
@@ -311,6 +391,39 @@ try {
          <li>Not all db's support -&gt;column</li>
          <li>Looking into ways to mitigate/document that</li>
       </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Example Usage (2)</h1>
+<pre>
+try {
+   my $sth = $dbh-&gt;prepare(
+      'INSERT INTO Rmails (email) VALUES (?)'
+   );
+   $sth-&gt;execute('frew@gmail.com');
+} catch (
+   DBIx::Exception::NoSuchTable $e
+) {
+   say $e-&gt;table . ' nt lolz'
+};
+</pre>
+   </div>
+
+   <div class="slide">
+      <h1>Example Usage (3)</h1>
+<pre>
+try {
+   my $sth = $dbh-&gt;prepare(
+      'INSERT INTO Emails (emisl) VALUES (?)'
+   );
+   $sth-&gt;execute('frew@gmail.com');
+} catch (
+   DBIx::Exception::NoSuchColumn $e
+) {
+   say  column: ' . $e-&gt;column .
+      ' does not exist on table ' $e-&gt;table
+};
+</pre>
    </div>
 
    <div class="slide">
