@@ -74,58 +74,132 @@
    </div>
 
    <div class="slide">
-      <h1>Old School Perl Exceptions</h1>
-<pre>eval { $sth-&gt;execute };
-if ($@ =~ /unique \s+ constraint \s+ violated/ix) {
-   ...
-}
+      <h1>Purpose</h1>
+      <p>To educate audience of exceptions in Perl and briefly introduce DBIx::Exceptions</p>
+   </div>
+
+   <div class="slide">
+      <h1>Vanilla Perl Exceptions</h1>
+<pre>eval {
+  my $x = rand 10;
+  die "half-broken: $x" if $x &lt; 5
+};
+say 'coin flip fail'
+   if defined $@ &amp;&amp; $@ =~ /half-broken: (.+)/;
 </pre>
+      <ul class="incremental">
+         <li>eval tells perl that die should set $@, instead of crashing</li>
+         <li>die (above) obviously sets $@ to value of string</li>
+         <li>final conditional is a typical form of exception handling in perl</li>
+      </ul>
    </div>
 
    <div class="slide">
       <h1>:-/</h1>
-      <ul class-="incremental">
-         <li>Only works on (probably) one rdbms</li>
-         <li>Not reusable at all</li>
+      <ul class="incremental">
+         <li>Super simple to do</li>
+         <li>Makes reasonable error message</li>
+      </ul>
+      <br />
+      <ul class="incremental">
+         <li>Not very reusable</li>
          <li>Not easy to read</li>
+         <li>Clobbers previous exceptions (overwrites $@)</li>
       </ul>
    </div>
 
    <div class="slide">
       <h1>Modern Exceptions</h1>
-      <ul class-="incremental">
+      <ul class="incremental">
          <li>We can throw objects</li>
          <li>We have better and safer syntax</li>
       </ul>
    </div>
 
    <div class="slide">
-      <h1>Exception::Class</h1>
+      <h1>Object Exceptions</h1>
+<pre>eval {
+  my $x = rand 10;
+  die Foo-&gt;new({ num =&gt; $x })
+    if $x &lt; 5
+};
+say 'coin flip fail'
+   if defined $@ &amp;&amp; ref $@ &amp;&amp; $@-&gt;isa('Foo');
+</pre>
+      <ul class="incremental">
+         <li>Note that exception does not need to be parsed.  Nice.</li>
+      </ul>
    </div>
 
    <div class="slide">
       <h1>Throwable</h1>
+      <ul class="incremental">
+         <li>Lightweight Moose Role for Exceptions</li>
+         <li>Very basic; great if you use Moose</li>
+         <li>See also: <a href="http://search.cpan.org/perldoc?Throwable::Error">Throwable::Error</a></li>
+      </ul>
    </div>
 
    <div class="slide">
-      <h1>Try::Tiny</h1>
-      <ul class-="incremental">
-         <li>small stuff where startup time matters</li>
-         <li>Module writers who do not want too many deps</li>
+      <h1>Throwable Exception</h1>
+<pre>package Foo;
+
+use Moose;
+with 'Throwable';
+
+has num =&gt; (
+   is =&gt; 'ro',
+   isa =&gt; 'Num',
+);
+
+1;
+</pre>
+      <ul class="incremental">
+         <li>with adds throw method and</li>
+         <li>previous_exception attribute</li>
+         <li>has is vanilla moose for add num attribute</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Throwable Exception in action</h1>
+<pre>eval {
+  my $x = rand 10;
+  Foo-&gt;throw({ num =&gt; $x })
+    if $x &lt; 5
+};
+say 'coin flip fail'
+   if defined $@ &amp;&amp; ref $@ &amp;&amp; $@-&gt;isa('Foo');
+</pre>
+      <ul class="incremental">
+         <li>throw dies and instantiates at the same time</li>
+         <li>also sets previous_exception attribute to whatever was in $@</li>
       </ul>
    </div>
 
    <div class="slide">
       <h1>Try::Tiny</h1>
-<pre>use Try::Tiny;
-try {
-   $sth-&gt;execute
+      <ul class="incremental">
+         <li>Minimizes common mistakes with eval (such as clobbering $@)</li>
+         <li>Small stuff when startup time matters</li>
+         <li>Module writers who do not want too many deps</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Try::Tiny in action</h1>
+<pre>try {
+  my $x = rand 10;
+  Foo-&gt;throw({ num =&gt; $x })
+    if $x &lt; 5
 } catch {
-   ... if /unique \s+ constraint \s+ violated/ix
+   say 'coin flip fail'
+     if ref $_ &amp;&amp; $_-&gt;isa('Foo')
 };
 </pre>
-      <ul>
-         <li>Note that $@ becomes $_</li>
+      <ul class="incremental">
+         <li>$@ becomes $_</li>
+         <li>No real need to check definedness</li>
       </ul>
    </div>
 
@@ -140,33 +214,64 @@ try {
    </div>
 
    <div class="slide">
-      <h1>TryCatch</h1>
-<pre>use TryCatch;
-try {
-   $sth-&gt;execute
-} catch (FooException $e where { $e-&gt;baz eq 'frewmbot' }) {
+      <h1>TryCatch in action</h1>
+<pre>try {
+  my $x = rand 10;
+  Foo-&gt;throw({ num =&gt; $x })
+    if $x &lt; 5
+} catch (Foo $e) {
+   say 'coin flip fail with num of ' . $e-&gt;num
+};
+</pre>
+      <ul>
+         <li>ensures that $e is of class Foo</li>
+         <li>Lots more features, no time, see <a href="http://search.cpan.org/perldoc?TryCatch">docs</a></li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>NOW YOU KNOW EVERYTHING</h1>
+      <ul class="incremental">
+         <li>Go forth and code</li>
+         <li>Just kidding, here's the fun stuff</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Old School Perl Database Exceptions</h1>
+<pre>eval { $sth-&gt;execute };
+if ($@ =~ /unique \s+ constraint \s+ violated/ix) {
    ...
 }
 </pre>
    </div>
 
    <div class="slide">
+      <h1>:-/</h1>
+      <ul class="incremental">
+         <li>Only works on (probably) one rdbms</li>
+         <li>Again, not reusable at all</li>
+         <li>And again, not easy to read</li>
+      </ul>
+   </div>
+
+   <div class="slide">
       <h1>Introducing DBIx::Exceptions</h1>
-      <p>DBIx::Exceptions - Database exceptions for all RDBMS'</p>
+      <p>DBIx::Exceptions - Database exceptions for all RDBMS' Ever</p>
    </div>
 
    <div class="slide">
       <h1>Introducing DBIx::Exceptions</h1>
       <ul>
-         <li>Databases Supported:<ul>
+         <li>Databases Initially Supported:<ul>
             <li>SQLite</li>
             <li>PostgreSQL</li>
-            <li>SQLServer</li>
-            <li>MySQL</li>
+            <li><del>SQLServer</del></li>
+            <li><del>MySQL</del></li>
          </ul></li>
-         <li>Exceptions Supported:<ul>
+         <li>Exceptions Initially Supported:<ul>
             <li>Unique</li>
-            <li>Foreign Key</li>
+            <li><del>Foreign Key</del></li>
             <li>Invalid Table</li>
             <li>Invalid Column</li>
             <li>Syntax</li>
@@ -176,9 +281,9 @@ try {
 
    <div class="slide">
       <h1>Planned Support for DBIx::Exceptions</h1>
-      <ul>
-         <li>All Databases</li>
-         <li>All Exceptions people want</li>
+      <ul class="incremental">
+         <li>All databases</li>
+         <li>All exceptions people want</li>
          <li>Databases in English mode</li>
          <li><strong>Patches Welcome</strong></li>
       </ul>
@@ -202,8 +307,16 @@ try {
    ...
 };
 </pre>
-      <ul>
+      <ul class="incremental">
          <li>Not all db's support -&gt;column</li>
+         <li>Looking into ways to mitigate/document that</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Other Gotchas</h1>
+      <ul class="incremental">
+         <li>If you are using an ORM it will probably need tweaking for this to work</li>
       </ul>
    </div>
 
