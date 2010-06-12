@@ -76,6 +76,9 @@
    <div class="slide">
       <h1>Purpose</h1>
       <p>To educate audience of exceptions in Perl and briefly introduce DBIx::Exceptions</p>
+      <ul class="incremental">
+         <li>Note: links in slides are so you can find docs for what I'm talking about later</li>
+      </ul>
    </div>
 
    <div class="slide">
@@ -175,7 +178,7 @@ say 'coin flip fail'
    <div class="slide">
       <h1>Modern Exceptions</h1>
       <ul class="incremental">
-         <li>We can throw objects</li>
+         <li>We can throw objects (since 5.005)</li>
          <li>We have better and safer syntax</li>
       </ul>
    </div>
@@ -196,7 +199,7 @@ say 'coin flip fail'
    </div>
 
    <div class="slide">
-      <h1>Exception::Class</h1>
+      <h1><a href="http://search.cpan.org/perldoc?Exception::Class">Exception::Class</a></h1>
       <ul class="incremental">
          <li>Does not require Moose</li>
          <li>Simple to use</li>
@@ -233,7 +236,7 @@ say 'coin flip fail'
    </div>
 
    <div class="slide">
-      <h1>Throwable</h1>
+      <h1><a href="http://search.cpan.org/perldoc?Throwable">Throwable</a></h1>
       <ul class="incremental">
          <li>Lightweight Moose Role for Exceptions</li>
          <li>Very basic; great if you use Moose</li>
@@ -279,7 +282,7 @@ say 'coin flip fail'
    </div>
 
    <div class="slide">
-      <h1>Try::Tiny</h1>
+      <h1><a href="http://search.cpan.org/perldoc?Try::Tiny">Try::Tiny</a></h1>
       <ul class="incremental">
          <li>Minimizes common mistakes with eval (such as clobbering $@)</li>
          <li>Small stuff when startup time matters</li>
@@ -306,12 +309,13 @@ say 'coin flip fail'
    </div>
 
    <div class="slide">
-      <h1>TryCatch</h1>
+      <h1><a href="http://search.cpan.org/perldoc?TryCatch">TryCatch</a></h1>
       <ul class="incremental">
          <li>My favorite</li>
          <li>Beautiful Syntax</li>
          <li>Abundantly clear</li>
          <li>Heavy</li>
+         <li>Broken in 5.12</li>
       </ul>
    </div>
 
@@ -345,7 +349,7 @@ catch (Baz $e where { $e-&gt;num &gt; 5 }) { ... }
    </div>
 
    <div class="slide">
-      <h1>Carp::Always</h1>
+      <h1><a href="http://search.cpan.org/perldoc?Carp::Always">Carp::Always</a></h1>
       <ul class="incremental">
          <li>Super awesome: forces stacktrace</li>
       </ul>
