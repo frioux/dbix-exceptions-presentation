@@ -79,6 +79,57 @@
    </div>
 
    <div class="slide">
+      <h1>What is an Exception?</h1>
+      <p>According to wikipedia, an exception is a special condition that
+      changes the normal flow of program execution</p>
+      <ul class="incremental">
+         <li>An exception is basically a form of interrupt</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>NOT an error code</h1>
+<pre>my $fh;
+if (!open $fh, '&gt;', 'filename') {
+   warn "couldn't open file!"
+}</pre>
+      <ul class="incremental">
+         <li>The above is <strong>not</strong> the typical idiom</li>
+         <li>The typical idiom throws an exception instead!</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Why should I use exceptions?</h1>
+      <ul class="incremental">
+         <li>Error codes can erroneously be ignored<ul class="incremental">
+            <li>Example: open + autodie</li>
+         </ul></li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>When should I use exceptions?</h1>
+      <ul class="incremental">
+         <li>When an "exceptional" condition occurs</li>
+         <li>File missing read access: exceptional</li>
+         <li>Reaching EOF: not exceptional</li>
+      </ul>
+   </div>
+
+   <div class="slide">
+      <h1>Problems with exceptions</h1>
+      <ul class="incremental">
+         <li>Tight coupling between levels</li>
+         <li>Worse performance</li>
+         <li>Contrains Users<ul class="incremental">
+            <li>Do not put exceptions in core</li>
+            <li>Make them optional</li>
+         </ul></li>
+      </ul>
+   </div>
+
+   <div class="slide">
       <h1>Super Basic Exceptions in Perl</h1>
 <pre>
 my $x = rand 10;
@@ -137,7 +188,7 @@ say 'coin flip fail'
     if $x &lt; 5
 };
 say 'coin flip fail'
-   if defined $@ &amp;&amp; ref $@ &amp;&amp; $@-&gt;isa('Foo');
+   if ref $@ &amp;&amp; $@-&gt;isa('Foo');
 </pre>
       <ul class="incremental">
          <li>Note that exception does not need to be parsed.  Nice.</li>
